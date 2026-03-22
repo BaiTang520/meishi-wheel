@@ -48,7 +48,7 @@
 
 | 访问方式 | 链接 |
 |------|------|
-| 🌐 **国内推荐（Vercel）** | https://meishi-wheel.vercel.app |
+| 🌐 **国内推荐（Render）** | https://meishi-wheel.onrender.com |
 | 🌍 **备用（GitHub Pages）** | https://baitang520.github.io/meishi-wheel/ |
 
 ---
