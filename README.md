@@ -44,9 +44,12 @@
 
 ## 🚀 快速使用
 
-**🌐 在线访问（国内推荐）：** https://meishi-wheel.vercel.app
+直接用手机或电脑浏览器打开下方链接即可使用，无需下载安装！
 
-直接用手机或电脑浏览器打开链接即可使用，无需下载安装！
+| 访问方式 | 链接 |
+|------|------|
+| 🌐 **国内推荐（Vercel）** | https://meishi-wheel.vercel.app |
+| 🌍 **备用（GitHub Pages）** | https://baitang520.github.io/meishi-wheel/ |
 
 ---
 
