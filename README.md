@@ -42,15 +42,9 @@
 
 ---
 
-## 🎯 预览
-
-![美食大转盘预览](https://raw.githubusercontent.com/BaiTang520/meishi-wheel/main/preview.png)
-
----
-
 ## 🚀 快速使用
 
-**在线访问：** https://baitang520.github.io/meishi-wheel/
+**🌐 在线访问（国内推荐）：** https://meishi-wheel.vercel.app
 
 直接用手机或电脑浏览器打开链接即可使用，无需下载安装！
 
