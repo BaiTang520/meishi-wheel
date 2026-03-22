@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍜 每天吃喝大转盘</title>
+<link href="https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #FFD700;
+    --gold-light: #FFF0A0;
+    --gold-dark: #B8860B;
+    --red: #E8192C;
+    --red-dark: #9B0000;
+    --bg-dark: #0A0005;
+    --bg-mid: #1A0010;
+    --neon-pink: #FF2D78;
+    --neon-cyan: #00F5FF;
+    --neon-yellow: #FFE600;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-dark);
+    min-height: 100vh;
+    font-family: 'ZCOOL XiaoWei', 'Noto Serif SC', serif;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  /* 背景粒子 */
+  .bg-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .particle {
+    position: absolute;
+    border-radius: 50%;
+    animation: float-up linear infinite;
+    opacity: 0;
+  }
+  @keyframes float-up {
+    0% { transform: translateY(100vh) scale(0); opacity: 0; }
+    10% { opacity: 0.8; }
+    90% { opacity: 0.4; }
+    100% { transform: translateY(-10vh) scale(1.5); opacity: 0; }
+  }
+
+  /* 顶部标题区 */
+  .header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 40px 20px 20px;
+    width: 100%;
+  }
+
+  .title-main {
+    font-family: 'Ma Shan Zheng', serif;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    background: linear-gradient(135deg, #FFD700 0%, #FF6B35 30%, #FF2D78 60%, #FFD700 100%);
+    background-size: 200% 200%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: gradient-shift 3s ease infinite;
+    text-shadow: none;
+    filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+    letter-spacing: 0.05em;
+  }
+
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .title-sub {
+    font-size: clamp(0.9rem, 2.5vw, 1.2rem);
+    color: rgba(255, 215, 0, 0.6);
+    letter-spacing: 0.3em;
+    margin-top: 8px;
+    text-transform: uppercase;
+  }
+
+  .header-deco {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .header-deco-line {
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .header-deco-icon {
+    font-size: 1.4rem;
+    animation: spin-slow 8s linear infinite;
+  }
+  @keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* 主体布局 */
+  .main-container {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
+    padding: 0 20px 60px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  /* 转盘区域 */
+  .wheel-section {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* 转盘外框装饰 */
+  .wheel-outer-ring {
+    position: relative;
+    width: min(520px, 90vw);
+    height: min(520px, 90vw);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .wheel-glow {
+    position: absolute;
+    inset: -20px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%);
+    animation: pulse-glow 2s ease-in-out infinite;
+  }
+  @keyframes pulse-glow {
+    0%, 100% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+
+  .wheel-border-ring {
+    position: absolute;
+    inset: -8px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    background: linear-gradient(var(--bg-dark), var(--bg-dark)) padding-box,
+                linear-gradient(135deg, #FFD700, #FF2D78, #00F5FF, #FFD700) border-box;
+    animation: border-spin 4s linear infinite;
+  }
+  @keyframes border-spin {
+    from { filter: hue-rotate(0deg); }
+    to { filter: hue-rotate(360deg); }
+  }
+
+  /* 转盘 canvas */
+  #wheelCanvas {
+    border-radius: 50%;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 0 30px rgba(255, 100, 0, 0.4));
+    transition: filter 0.3s;
+    width: min(500px, 88vw);
+    height: min(500px, 88vw);
+  }
+  #wheelCanvas:hover {
+    filter: drop-shadow(0 0 50px rgba(255, 200, 0, 0.6));
+  }
+
+  /* 指针 */
+  .wheel-pointer {
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    filter: drop-shadow(0 4px 12px rgba(255,50,0,0.8));
+  }
+  .wheel-pointer svg {
+    width: 50px;
+    height: 60px;
+  }
+
+  /* 中心按钮 */
+  .wheel-center-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff8e0, #FFD700 40%, #B8860B);
+    border: 4px solid #fff;
+    box-shadow: 0 0 20px rgba(255,215,0,0.8), inset 0 2px 4px rgba(255,255,255,0.5);
+    cursor: pointer;
+    font-family: 'Ma Shan Zheng', serif;
+    font-size: 1rem;
+    color: #5A2D00;
+    font-weight: 900;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    line-height: 1.2;
+    text-align: center;
+  }
+  .wheel-center-btn:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+    box-shadow: 0 0 40px rgba(255,215,0,1), inset 0 2px 4px rgba(255,255,255,0.5);
+  }
+  .wheel-center-btn:active {
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  .wheel-center-btn.spinning {
+    animation: center-pulse 0.3s ease infinite alternate;
+  }
+  @keyframes center-pulse {
+    from { box-shadow: 0 0 20px rgba(255,215,0,0.8); }
+    to { box-shadow: 0 0 60px rgba(255,100,0,1); }
+  }
+
+  /* 转盘装饰珠子 */
+  .wheel-beads {
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 5;
+  }
+  .bead {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff, var(--gold));
+    box-shadow: 0 0 6px rgba(255,215,0,0.8);
+    transform-origin: 50% 50%;
+  }
+
+  /* 分类切换 */
+  .category-tabs {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .tab-btn {
+    padding: 10px 22px;
+    border-radius: 30px;
+    border: 2px solid rgba(255,215,0,0.3);
+    background: rgba(255,215,0,0.05);
+    color: rgba(255,215,0,0.6);
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    letter-spacing: 0.1em;
+    position: relative;
+    overflow: hidden;
+  }
+  .tab-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,100,0,0.2));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .tab-btn:hover::before, .tab-btn.active::before { opacity: 1; }
+  .tab-btn.active {
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 20px rgba(255,215,0,0.3);
+  }
+  .tab-btn:hover {
+    border-color: rgba(255,215,0,0.7);
+    color: rgba(255,215,0,0.9);
+  }
+
+  /* 结果展示 */
+  .result-panel {
+    width: 100%;
+    max-width: 500px;
+    min-height: 120px;
+    border-radius: 20px;
+    border: 2px solid rgba(255,215,0,0.2);
+    background: linear-gradient(135deg, rgba(255,215,0,0.05), rgba(255,50,0,0.05));
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.5s;
+  }
+  .result-panel.has-result {
+    border-color: var(--gold);
+    box-shadow: 0 0 40px rgba(255,215,0,0.2), inset 0 0 40px rgba(255,215,0,0.05);
+  }
+  .result-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 40%, rgba(255,215,0,0.03) 100%);
+  }
+
+  .result-label {
+    font-size: 0.85rem;
+    color: rgba(255,215,0,0.5);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+  }
+  .result-text {
+    font-family: 'Ma Shan Zheng', serif;
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    background: linear-gradient(135deg, #FFD700, #FF6B35, #FF2D78);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    line-height: 1.2;
+    animation: result-appear 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes result-appear {
+    from { transform: scale(0.5) rotate(-10deg); opacity: 0; }
+    to { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+  .result-emoji {
+    font-size: 2.5rem;
+    animation: bounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes bounce {
+    from { transform: scale(0) translateY(20px); }
+    to { transform: scale(1) translateY(0); }
+  }
+  .result-placeholder {
+    color: rgba(255,215,0,0.25);
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+  }
+
+  /* 历史记录 */
+  .history-section {
+    width: 100%;
+    max-width: 500px;
+  }
+  .history-title {
+    font-size: 0.85rem;
+    color: rgba(255,215,0,0.4);
+    letter-spacing: 0.3em;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .history-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+  }
+  .history-tag {
+    padding: 6px 14px;
+    border-radius: 20px;
+    background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.15);
+    color: rgba(255,215,0,0.5);
+    font-size: 0.85rem;
+    animation: tag-in 0.3s ease;
+  }
+  @keyframes tag-in {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  .history-tag:first-child {
+    background: rgba(255,100,0,0.15);
+    border-color: rgba(255,100,0,0.3);
+    color: rgba(255,150,50,0.8);
+  }
+
+  /* 烟花效果 */
+  .firework {
+    position: fixed;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .spark {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: spark-fly 1s ease-out forwards;
+  }
+  @keyframes spark-fly {
+    0% { transform: translate(0,0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+  }
+
+  /* 自定义选项区 */
+  .custom-section {
+    width: 100%;
+    max-width: 500px;
+  }
+  .custom-title {
+    font-size: 0.85rem;
+    color: rgba(255,215,0,0.4);
+    letter-spacing: 0.3em;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+  .custom-input-row {
+    display: flex;
+    gap: 10px;
+  }
+  .custom-input {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,215,0,0.2);
+    background: rgba(255,215,0,0.05);
+    color: rgba(255,215,0,0.9);
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1rem;
+    outline: none;
+    transition: border-color 0.3s;
+  }
+  .custom-input::placeholder { color: rgba(255,215,0,0.25); }
+  .custom-input:focus { border-color: rgba(255,215,0,0.5); }
+  .custom-add-btn {
+    padding: 10px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,215,0,0.3);
+    background: rgba(255,215,0,0.1);
+    color: var(--gold);
+    font-family: 'ZCOOL XiaoWei', serif;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .custom-add-btn:hover {
+    background: rgba(255,215,0,0.2);
+    box-shadow: 0 0 15px rgba(255,215,0,0.2);
+  }
+
+  /* 底部装饰 */
+  .footer-deco {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 20px;
+    color: rgba(255,215,0,0.2);
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+  }
+
+  /* 响应式 */
+  @media (max-width: 480px) {
+    .wheel-center-btn { width: 60px; height: 60px; font-size: 0.8rem; }
+    .tab-btn { padding: 8px 16px; font-size: 0.9rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 背景粒子 -->
+<div class="bg-particles" id="bgParticles"></div>
+
+<!-- 标题 -->
+<div class="header">
+  <div class="title-main">每天吃喝大转盘</div>
+  <div class="title-sub">今天吃什么 · 让命运决定</div>
+  <div class="header-deco">
+    <div class="header-deco-line"></div>
+    <div class="header-deco-icon">✦</div>
+    <div class="header-deco-line"></div>
+  </div>
+</div>
+
+<!-- 主体 -->
+<div class="main-container">
+
+  <!-- 分类切换 -->
+  <div class="category-tabs">
+    <button class="tab-btn active" data-cat="lunch" onclick="switchCategory('lunch', this)">🍱 午餐</button>
+    <button class="tab-btn" data-cat="dinner" onclick="switchCategory('dinner', this)">🍽️ 晚餐</button>
+    <button class="tab-btn" data-cat="drink" onclick="switchCategory('drink', this)">🧋 饮品</button>
+    <button class="tab-btn" data-cat="snack" onclick="switchCategory('snack', this)">🍿 零食</button>
+    <button class="tab-btn" data-cat="custom" onclick="switchCategory('custom', this)">✏️ 自定义</button>
+  </div>
+
+  <!-- 转盘 -->
+  <div class="wheel-section">
+    <div class="wheel-outer-ring">
+      <div class="wheel-glow"></div>
+      <div class="wheel-border-ring"></div>
+      <canvas id="wheelCanvas"></canvas>
+      <!-- 指针 -->
+      <div class="wheel-pointer">
+        <svg viewBox="0 0 50 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="ptrGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#FF2D78"/>
+              <stop offset="100%" stop-color="#FF6B00"/>
+            </linearGradient>
+          </defs>
+          <polygon points="25,55 5,5 45,5" fill="url(#ptrGrad)" stroke="#FFD700" stroke-width="2"/>
+          <circle cx="25" cy="8" r="6" fill="#FFD700" stroke="#fff" stroke-width="2"/>
+        </svg>
+      </div>
+      <!-- 中心按钮 -->
+      <button class="wheel-center-btn" id="spinBtn" onclick="spin()">
+        <span>转</span><span>动</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- 结果展示 -->
+  <div class="result-panel" id="resultPanel">
+    <div class="result-placeholder" id="resultPlaceholder">点击转盘或中心按钮开始</div>
+    <div id="resultContent" style="display:none; flex-direction:column; align-items:center; gap:8px;">
+      <div class="result-label">今天就吃</div>
+      <div class="result-emoji" id="resultEmoji"></div>
+      <div class="result-text" id="resultText"></div>
+    </div>
+  </div>
+
+  <!-- 历史记录 -->
+  <div class="history-section">
+    <div class="history-title">— 今日已转 —</div>
+    <div class="history-list" id="historyList">
+      <span style="color:rgba(255,215,0,0.2);font-size:0.85rem;">暂无记录</span>
+    </div>
+  </div>
+
+  <!-- 自定义区域 -->
+  <div class="custom-section" id="customSection" style="display:none;">
+    <div class="custom-title">— 添加自定义选项 —</div>
+    <div class="custom-input-row">
+      <input class="custom-input" id="customInput" placeholder="输入食物名称..." maxlength="8" onkeydown="if(event.key==='Enter')addCustomItem()">
+      <button class="custom-add-btn" onclick="addCustomItem()">添加</button>
+    </div>
+    <div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:8px;" id="customTags"></div>
+  </div>
+
+</div>
+
+<div class="footer-deco">✦ 吃什么是个哲学问题，让转盘替你思考 ✦</div>
+
+<script>
+// ===== 数据 =====
+const categories = {
+  lunch: {
+    items: [
+      { name: '黄焖鸡', emoji: '🍗', color: '#FF6B35' },
+      { name: '麻辣烫', emoji: '🌶️', color: '#E8192C' },
+      { name: '兰州拉面', emoji: '🍜', color: '#FF9500' },
+      { name: '沙县小吃', emoji: '🥟', color: '#FFD700' },
+      { name: '炒饭', emoji: '🍳', color: '#FF6B35' },
+      { name: '盖浇饭', emoji: '🍚', color: '#E8192C' },
+      { name: '寿司', emoji: '🍣', color: '#FF9500' },
+      { name: '汉堡', emoji: '🍔', color: '#FFD700' },
+      { name: '螺蛳粉', emoji: '🍝', color: '#FF6B35' },
+      { name: '烤肉饭', emoji: '🥩', color: '#E8192C' },
+    ]
+  },
+  dinner: {
+    items: [
+      { name: '火锅', emoji: '🫕', color: '#E8192C' },
+      { name: '烧烤', emoji: '🍢', color: '#FF6B35' },
+      { name: '日料', emoji: '🍱', color: '#FF9500' },
+      { name: '西餐', emoji: '🥗', color: '#FFD700' },
+      { name: '川菜', emoji: '🌶️', color: '#E8192C' },
+      { name: '粤菜', emoji: '🦐', color: '#FF6B35' },
+      { name: '烤鱼', emoji: '🐟', color: '#FF9500' },
+      { name: '小龙虾', emoji: '🦞', color: '#E8192C' },
+      { name: '炸鸡', emoji: '🍗', color: '#FFD700' },
+      { name: '披萨', emoji: '🍕', color: '#FF6B35' },
+    ]
+  },
+  drink: {
+    items: [
+      { name: '奶茶', emoji: '🧋', color: '#FF9500' },
+      { name: '咖啡', emoji: '☕', color: '#8B4513' },
+      { name: '果汁', emoji: '🍊', color: '#FF6B35' },
+      { name: '柠檬水', emoji: '🍋', color: '#FFD700' },
+      { name: '可乐', emoji: '🥤', color: '#E8192C' },
+      { name: '豆浆', emoji: '🥛', color: '#FFF8DC' },
+      { name: '椰子水', emoji: '🥥', color: '#90EE90' },
+      { name: '酸梅汤', emoji: '🍵', color: '#8B0000' },
+    ]
+  },
+  snack: {
+    items: [
+      { name: '薯片', emoji: '🥔', color: '#FFD700' },
+      { name: '巧克力', emoji: '🍫', color: '#8B4513' },
+      { name: '冰淇淋', emoji: '🍦', color: '#FF9500' },
+      { name: '蛋糕', emoji: '🎂', color: '#FF6B35' },
+      { name: '爆米花', emoji: '🍿', color: '#FFD700' },
+      { name: '糖葫芦', emoji: '🍡', color: '#E8192C' },
+      { name: '坚果', emoji: '🥜', color: '#8B4513' },
+      { name: '饼干', emoji: '🍪', color: '#FF9500' },
+    ]
+  },
+  custom: {
+    items: []
+  }
+};
+
+let currentCat = 'lunch';
+let spinning = false;
+let currentAngle = 0;
+let history = [];
+let customItems = [];
+
+// ===== 颜色方案 =====
+const colorPalettes = [
+  ['#E8192C', '#FF6B35', '#FFD700', '#FF9500', '#E8192C', '#FF6B35', '#FFD700', '#FF9500', '#E8192C', '#FF6B35'],
+  ['#FF2D78', '#FF6B35', '#FFD700', '#00C9FF', '#FF2D78', '#FF6B35', '#FFD700', '#00C9FF'],
+  ['#E8192C', '#FF9500', '#FFD700', '#FF6B35', '#E8192C', '#FF9500', '#FFD700', '#FF6B35'],
+];
+
+// ===== Canvas 转盘 =====
+const canvas = document.getElementById('wheelCanvas');
+const ctx = canvas.getContext('2d');
+
+function getSize() {
+  return Math.min(500, window.innerWidth * 0.88);
+}
+
+function resizeCanvas() {
+  const size = getSize();
+  canvas.width = size;
+  canvas.height = size;
+  drawWheel(currentAngle);
+}
+
+function getItems() {
+  if (currentCat === 'custom') {
+    return customItems.length > 0 ? customItems : [
+      { name: '请添加选项', emoji: '✏️', color: '#FFD700' }
+    ];
+  }
+  return categories[currentCat].items;
+}
+
+function drawWheel(angle) {
+  const items = getItems();
+  const n = items.length;
+  const size = canvas.width;
+  const cx = size / 2, cy = size / 2;
+  const r = size / 2 - 8;
+  const arc = (Math.PI * 2) / n;
+
+  ctx.clearRect(0, 0, size, size);
+
+  // 外圈阴影
+  ctx.save();
+  ctx.shadowColor = 'rgba(255,150,0,0.3)';
+  ctx.shadowBlur = 20;
+
+  for (let i = 0; i < n; i++) {
+    const startAngle = angle + i * arc - Math.PI / 2;
+    const endAngle = startAngle + arc;
+    const item = items[i];
+
+    // 扇形
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.closePath();
+
+    // 渐变填充
+    const midAngle = startAngle + arc / 2;
+    const gx = cx + Math.cos(midAngle) * r * 0.5;
+    const gy = cy + Math.sin(midAngle) * r * 0.5;
+    const grad = ctx.createRadialGradient(gx, gy, 0, cx, cy, r);
+    const baseColor = item.color || colorPalettes[0][i % colorPalettes[0].length];
+    grad.addColorStop(0, lightenColor(baseColor, 40));
+    grad.addColorStop(0.6, baseColor);
+    grad.addColorStop(1, darkenColor(baseColor, 30));
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 边框
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  // 绘制文字和emoji
+  for (let i = 0; i < n; i++) {
+    const startAngle = angle + i * arc - Math.PI / 2;
+    const midAngle = startAngle + arc / 2;
+    const item = items[i];
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(midAngle);
+
+    // emoji
+    const emojiR = r * 0.72;
+    ctx.font = `${Math.max(16, size * 0.05)}px serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.emoji || '🍴', emojiR, 0);
+
+    // 文字
+    ctx.font = `bold ${Math.max(12, size * 0.035)}px 'ZCOOL XiaoWei', serif`;
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(item.name, r * 0.45, 0);
+
+    ctx.restore();
+  }
+
+  // 中心圆
+  const centerGrad = ctx.createRadialGradient(cx - 8, cy - 8, 2, cx, cy, 40);
+  centerGrad.addColorStop(0, '#fff8e0');
+  centerGrad.addColorStop(0.4, '#FFD700');
+  centerGrad.addColorStop(1, '#B8860B');
+  ctx.beginPath();
+  ctx.arc(cx, cy, 42, 0, Math.PI * 2);
+  ctx.fillStyle = centerGrad;
+  ctx.shadowColor = 'rgba(255,215,0,0.8)';
+  ctx.shadowBlur = 15;
+  ctx.fill();
+  ctx.strokeStyle = '#fff';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // 外圈装饰圆
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+  ctx.lineWidth = 2;
+  ctx.shadowColor = 'rgba(255,215,0,0.6)';
+  ctx.shadowBlur = 8;
+  ctx.stroke();
+
+  // 珠子
+  const beadCount = Math.min(n * 2, 24);
+  for (let i = 0; i < beadCount; i++) {
+    const a = (i / beadCount) * Math.PI * 2 + angle;
+    const bx = cx + Math.cos(a) * (r + 2);
+    const by = cy + Math.sin(a) * (r + 2);
+    const beadGrad = ctx.createRadialGradient(bx - 2, by - 2, 1, bx, by, 6);
+    beadGrad.addColorStop(0, '#fff');
+    beadGrad.addColorStop(1, '#FFD700');
+    ctx.beginPath();
+    ctx.arc(bx, by, 5, 0, Math.PI * 2);
+    ctx.fillStyle = beadGrad;
+    ctx.shadowColor = 'rgba(255,215,0,0.8)';
+    ctx.shadowBlur = 6;
+    ctx.fill();
+  }
+}
+
+function lightenColor(hex, amount) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.min(255, (num >> 16) + amount);
+  const g = Math.min(255, ((num >> 8) & 0xff) + amount);
+  const b = Math.min(255, (num & 0xff) + amount);
+  return `rgb(${r},${g},${b})`;
+}
+function darkenColor(hex, amount) {
+  const num = parseInt(hex.replace('#', ''), 16);
+  const r = Math.max(0, (num >> 16) - amount);
+  const g = Math.max(0, ((num >> 8) & 0xff) - amount);
+  const b = Math.max(0, (num & 0xff) - amount);
+  return `rgb(${r},${g},${b})`;
+}
+
+// ===== 旋转逻辑 =====
+function spin() {
+  if (spinning) return;
+  const items = getItems();
+  if (items.length === 0) return;
+
+  spinning = true;
+  document.getElementById('spinBtn').classList.add('spinning');
+  document.getElementById('resultContent').style.display = 'none';
+  document.getElementById('resultPlaceholder').style.display = 'block';
+  document.getElementById('resultPanel').classList.remove('has-result');
+
+  const extraSpins = 5 + Math.random() * 5;
+  const targetAngle = currentAngle + extraSpins * Math.PI * 2 + Math.random() * Math.PI * 2;
+  const duration = 3000 + Math.random() * 1500;
+  const startAngle = currentAngle;
+  const startTime = performance.now();
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    currentAngle = startAngle + (targetAngle - startAngle) * easeOut(progress);
+    drawWheel(currentAngle);
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      spinning = false;
+      document.getElementById('spinBtn').classList.remove('spinning');
+      showResult();
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function showResult() {
+  const items = getItems();
+  const n = items.length;
+  const arc = (Math.PI * 2) / n;
+
+  // 绘制时每个扇区 i 的中心角度 = currentAngle + i*arc - π/2 + arc/2
+  // 指针固定在顶部（canvas 正上方，即 -π/2 方向）
+  // 需要找到哪个扇区的范围覆盖了 -π/2（即 canvas 顶部）
+  // 扇区 i 的起始角 = currentAngle + i*arc - π/2
+  // 指针角度相对于转盘坐标系 = -π/2 - currentAngle + π/2 = -currentAngle
+  // 归一化到 [0, 2π)
+  const relativePointer = ((-currentAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+  const index = Math.floor(relativePointer / arc) % n;
+  const item = items[index];
+
+  // 显示结果
+  document.getElementById('resultPlaceholder').style.display = 'none';
+  const content = document.getElementById('resultContent');
+  content.style.display = 'flex';
+  document.getElementById('resultEmoji').textContent = item.emoji || '🍴';
+  document.getElementById('resultText').textContent = item.name;
+  document.getElementById('resultPanel').classList.add('has-result');
+
+  // 重新触发动画
+  const emoji = document.getElementById('resultEmoji');
+  const text = document.getElementById('resultText');
+  emoji.style.animation = 'none';
+  text.style.animation = 'none';
+  requestAnimationFrame(() => {
+    emoji.style.animation = '';
+    text.style.animation = '';
+  });
+
+  // 添加历史
+  addHistory(item);
+
+  // 烟花
+  setTimeout(() => launchFireworks(), 100);
+}
+
+// ===== 历史记录 =====
+function addHistory(item) {
+  history.unshift(item);
+  if (history.length > 8) history.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById('historyList');
+  if (history.length === 0) {
+    list.innerHTML = '<span style="color:rgba(255,215,0,0.2);font-size:0.85rem;">暂无记录</span>';
+    return;
+  }
+  list.innerHTML = history.map((item, i) =>
+    `<span class="history-tag">${item.emoji} ${item.name}</span>`
+  ).join('');
+}
+
+// ===== 分类切换 =====
+function switchCategory(cat, btn) {
+  currentCat = cat;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const customSection = document.getElementById('customSection');
+  customSection.style.display = cat === 'custom' ? 'block' : 'none';
+
+  currentAngle = 0;
+  drawWheel(currentAngle);
+
+  // 重置结果
+  document.getElementById('resultContent').style.display = 'none';
+  document.getElementById('resultPlaceholder').style.display = 'block';
+  document.getElementById('resultPanel').classList.remove('has-result');
+}
+
+// ===== 自定义 =====
+function addCustomItem() {
+  const input = document.getElementById('customInput');
+  const val = input.value.trim();
+  if (!val) return;
+  if (customItems.length >= 12) {
+    alert('最多添加12个选项');
+    return;
+  }
+  const emojis = ['🍴', '🥢', '🍽️', '🥄', '🍜', '🍱', '🥘', '🍲'];
+  const colors = ['#E8192C', '#FF6B35', '#FFD700', '#FF9500', '#FF2D78', '#00C9FF'];
+  customItems.push({
+    name: val,
+    emoji: emojis[customItems.length % emojis.length],
+    color: colors[customItems.length % colors.length]
+  });
+  input.value = '';
+  renderCustomTags();
+  drawWheel(currentAngle);
+}
+
+function removeCustomItem(i) {
+  customItems.splice(i, 1);
+  renderCustomTags();
+  drawWheel(currentAngle);
+}
+
+function renderCustomTags() {
+  const container = document.getElementById('customTags');
+  container.innerHTML = customItems.map((item, i) =>
+    `<span style="padding:6px 12px;border-radius:20px;background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);color:rgba(255,215,0,0.7);font-size:0.85rem;cursor:pointer;display:inline-flex;align-items:center;gap:6px;" onclick="removeCustomItem(${i})">
+      ${item.emoji} ${item.name} <span style="color:rgba(255,100,100,0.6);">×</span>
+    </span>`
+  ).join('');
+}
+
+// ===== 烟花 =====
+function launchFireworks() {
+  const colors = ['#FFD700', '#FF2D78', '#00F5FF', '#FF6B35', '#fff'];
+  for (let f = 0; f < 5; f++) {
+    setTimeout(() => {
+      const fw = document.createElement('div');
+      fw.className = 'firework';
+      const x = 20 + Math.random() * 60;
+      const y = 20 + Math.random() * 50;
+      fw.style.left = x + 'vw';
+      fw.style.top = y + 'vh';
+      document.body.appendChild(fw);
+
+      for (let s = 0; s < 16; s++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        const angle = (s / 16) * Math.PI * 2;
+        const dist = 40 + Math.random() * 60;
+        spark.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+        spark.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+        spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+        spark.style.animationDelay = Math.random() * 0.2 + 's';
+        fw.appendChild(spark);
+      }
+
+      setTimeout(() => fw.remove(), 1500);
+    }, f * 200);
+  }
+}
+
+// ===== 背景粒子 =====
+function createParticles() {
+  const container = document.getElementById('bgParticles');
+  const colors = ['rgba(255,215,0,0.6)', 'rgba(255,100,0,0.5)', 'rgba(255,50,120,0.4)', 'rgba(0,200,255,0.3)'];
+
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 2 + Math.random() * 6;
+    p.style.cssText = `
+      width: ${size}px;
+      height: ${size}px;
+      left: ${Math.random() * 100}%;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      animation-duration: ${6 + Math.random() * 10}s;
+      animation-delay: ${Math.random() * 10}s;
+      box-shadow: 0 0 ${size * 2}px currentColor;
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ===== 点击转盘也能旋转 =====
+canvas.addEventListener('click', spin);
+
+// ===== 初始化 =====
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+createParticles();
+</script>
+</body>
+</html>
